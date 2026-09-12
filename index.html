@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ani - your companion</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26' fill='%23f5c76a'%3E%E2%99%A5%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --acc: #f5c76a;
+    --acc2: #ffe6a8;
+    --panel: rgba(20,14,26,.93);
+    --ink: #ffe9d2;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0b0810; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
+  #scene { position:fixed; inset:0; }
+  #loading { position:fixed; inset:0; background:#0b0810; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:50; transition:opacity .6s; color:var(--acc2); }
+  #loading .ring { width:46px; height:46px; border:3px solid rgba(245,199,106,.15); border-top-color:var(--acc2); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:18px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #hud { position:fixed; top:18px; left:20px; z-index:10; color:#f5e9dc; pointer-events:none; }
+  #hud h1 { font-size:22px; font-weight:600; letter-spacing:2px; color:var(--acc2); text-shadow:0 0 18px rgba(245,199,106,.45); }
+  #hud p { font-size:11px; opacity:.55; letter-spacing:1px; margin-top:2px; }
+  #moodline { font-size:10px; color:var(--acc); opacity:.75; letter-spacing:1px; margin-top:4px; text-transform:lowercase; }
+  #affection { position:fixed; top:20px; right:22px; z-index:10; text-align:right; pointer-events:none; }
+  #hearts { font-size:15px; letter-spacing:2px; }
+  #affLabel { font-size:10px; color:var(--acc); opacity:.8; letter-spacing:1px; margin-top:3px; text-transform:uppercase; }
+  #gear { position:fixed; top:74px; right:22px; z-index:30; width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,199,106,.35); background:rgba(26,19,34,.85); color:var(--acc2); font-size:16px; cursor:pointer; line-height:1; }
+  #gear:active { transform:scale(.92); }
+  #panel { position:fixed; top:116px; right:22px; z-index:30; width:210px; background:var(--panel); border:1px solid rgba(245,199,106,.3); border-radius:16px; padding:14px 16px; color:var(--ink); font-size:13px; display:none; box-shadow:0 8px 32px rgba(0,0,0,.55); }
+  #panel.open { display:block; }
+  #panel .row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  #panel .row span { opacity:.75; letter-spacing:.5px; }
+  .tog { background:rgba(245,199,106,.12); border:1px solid rgba(245,199,106,.4); color:var(--acc2); border-radius:12px; padding:3px 12px; font-size:12px; cursor:pointer; }
+  .tog.off { opacity:.4; }
+  #swatches { display:flex; gap:8px; }
+  .sw { width:18px; height:18px; border-radius:50%; border:2px solid transparent; cursor:pointer; }
+  .sw.sel { border-color:#fff; }
+  #stats { font-size:11px; line-height:1.7; opacity:.65; margin:8px 0 10px; border-top:1px solid rgba(245,199,106,.15); padding-top:8px; }
+  #reset { width:100%; background:none; border:1px solid rgba(255,120,120,.35); color:#ff9c9c; border-radius:12px; padding:6px 0; font-size:11px; cursor:pointer; letter-spacing:.5px; }
+  #bubble { position:fixed; z-index:20; max-width:260px; background:var(--panel); border:1px solid rgba(245,199,106,.4); color:var(--ink); padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.35; opacity:0; transform:translate(-50%,-110%) scale(.9); transition:opacity .25s, transform .25s; pointer-events:none; box-shadow:0 4px 24px rgba(0,0,0,.5); }
+  #bubble.show { opacity:1; transform:translate(-50%,-115%) scale(1); }
+  #bubble:after { content:''; position:absolute; left:50%; bottom:-7px; transform:translateX(-50%); border:7px solid transparent; border-top-color:rgba(245,199,106,.4); border-bottom:0; }
+  #bubble .dots i { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--acc2); margin:0 2px; animation:bob 1s infinite; }
+  #bubble .dots i:nth-child(2) { animation-delay:.15s; }
+  #bubble .dots i:nth-child(3) { animation-delay:.3s; }
+  @keyframes bob { 0%,60%,100% { transform:translateY(0); opacity:.5; } 30% { transform:translateY(-4px); opacity:1; } }
+  #chatbar { position:fixed; bottom:0; left:0; right:0; z-index:15; display:flex; gap:10px; padding:14px 16px calc(14px + env(safe-area-inset-bottom)); background:linear-gradient(transparent, rgba(8,5,12,.88) 40%); }
+  #msg { flex:1; background:rgba(26,19,34,.9); border:1px solid rgba(245,199,106,.3); border-radius:24px; padding:12px 18px; color:var(--ink); font-size:15px; outline:none; }
+  #msg::placeholder { color:rgba(255,233,210,.35); }
+  #msg:focus { border-color:rgba(245,199,106,.7); box-shadow:0 0 20px rgba(245,199,106,.15); }
+  #send { background:linear-gradient(135deg,var(--acc),#ff6a00); border:none; border-radius:24px; padding:12px 22px; color:#1a0e00; font-weight:700; font-size:15px; cursor:pointer; }
+  #send:active { transform:scale(.96); }
+  #hint { position:fixed; bottom:78px; left:0; right:0; text-align:center; z-index:9; color:rgba(255,233,210,.4); font-size:12px; letter-spacing:1px; pointer-events:none; transition:opacity 1s; }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<div id="loading"><div class="ring"></div><div>waking ani up...</div></div>
+<div id="hud"><h1>ANI</h1><p>a hand-built homage to the original &middot; v1</p><p id="moodline"></p></div>
+<div id="affection"><div id="hearts"></div><div id="affLabel">affection</div></div>
+<button id="gear" title="settings">&#9881;</button>
+<div id="panel">
+  <div class="row"><span>voice</span><button id="tVoice" class="tog">on</button></div>
+  <div class="row"><span>sound</span><button id="tSound" class="tog">on</button></div>
+  <div class="row"><span>theme</span><div id="swatches"></div></div>
+  <div id="stats"></div>
+  <button id="reset">forget everything</button>
+</div>
+<div id="bubble"></div>
+<div id="hint">click her &middot; say hi</div>
+<div id="chatbar">
+  <input id="msg" type="text" placeholder="talk to ani... (try: trivia, lullaby, clap)" autocomplete="off" maxlength="200">
+  <button id="send">send</button>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
